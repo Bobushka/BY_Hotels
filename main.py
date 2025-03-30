@@ -12,7 +12,8 @@ hotels = [
 
 @app.get("/hotels")
 def get_hotels(
-    title: str | None = Query(description="Search by title")
+    id: int = Query(description="Идентификатор отеля"),
+    title: str | None = Query(description="Название отеля")
 ):
     return [hotel for hotel in hotels if hotel["title"] == title]
 
