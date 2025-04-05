@@ -52,17 +52,40 @@ def update_hotel(
     ):
     """Меняет все параметры одного отеля"""
     for hotel in hotels:
-        print(hotel)
-        print(f"{hotel_id=}, {title=}, {name=}")
         if hotel["id"] == hotel_id:
             hotel["title"] = title
             hotel["name"] = name
-            pprint(hotels)
             return {"status": "OK"}
     return {"status": "ERROR. Hotel not found"}
 
 
-
+@app.patch("/hotels/{hotel_id}")
+def update_hotel(
+        hotel_id: int = Path(embed=True, description="Идентификатор отеля"),
+        title: str | None = Body(default=None, embed=True),
+        name: str | None = Body(default=None, embed=True)
+    ):
+    """Меняет один из параметров или оба параметра одного отеля"""
+    if title and name:
+        for hotel in hotels:
+            if hotel["id"] == hotel_id:
+                hotel["title"] = title
+                hotel["name"] = name
+                return {"status": "OK"}
+        return {"status": "ERROR. Hotel not found"}
+    if title: 
+        for hotel in hotels:
+            if hotel["id"] == hotel_id:
+                hotel["title"] = title
+                return {"status": "OK"}
+            return {"status": "ERROR(title). Hotel not found"}
+    if name:
+        for hotel in hotels:
+            if hotel["id"] == hotel_id:
+                hotel["name"] = name
+                return {"status": "OK"}
+            return {"status": "ERROR(name). Hotel not found"}
+    return {"status": "ERROR. At least one parameter must be provided"}
 
 
 if __name__ == "__main__":
