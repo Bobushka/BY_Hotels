@@ -11,6 +11,24 @@ hotels = [
     {"id": 3, "title": "Moscow", "name": "moscow"}
 ]
 
+# --------------------------------------------------------
+
+import time, asyncio
+
+@app.get("/sync/{id}")
+def sync_func(id: int):
+    print(f"sync.start {id}: {time.time():.2f}")
+    time.sleep(3)
+    print(f"sync.finish {id}: {time.time():.2f}")
+
+
+@app.get("/async/{id}")
+async def async_func(id: int):
+    print(f"async. Start {id}: {time.time():.2f}")
+    await asyncio.sleep(3)
+    print(f"async.finish {id}: {time.time():.2f}")
+
+# --------------------------------------------------------
 
 @app.get("/hotels")
 def get_hotels(
@@ -45,7 +63,7 @@ def create_hotel(
 
 
 @app.put("/hotels/{hotel_id}")
-def update_hotel(
+def edit_hotel(
         hotel_id: int = Path(embed=True, description="Идентификатор отеля"),
         title: str = Body(embed=True),
         name: str = Body(embed=True)
@@ -59,7 +77,11 @@ def update_hotel(
     return {"status": "ERROR. Hotel not found"}
 
 
-@app.patch("/hotels/{hotel_id}")
+@app.patch(
+        path="/hotels/{hotel_id}",
+        summary="Меняет один из параметров или оба параметра одного отеля",
+        description="Частично обновляет данные одного отеля"  # можно использовать HTML
+    )
 def update_hotel(
         hotel_id: int = Path(embed=True, description="Идентификатор отеля"),
         title: str | None = Body(default=None, embed=True),
