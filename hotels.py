@@ -69,24 +69,11 @@ def update_hotel(
         name: str | None = Body(default=None, embed=True)
     ):
     """Меняет один из параметров или оба параметра одного отеля"""
-    if title and name:
-        for hotel in hotels:
-            if hotel["id"] == hotel_id:
-                hotel["title"] = title
-                hotel["name"] = name
-                return {"status": "OK"}
-        return {"status": "ERROR. Hotel not found"}
-    if title: 
-        for hotel in hotels:
-            if hotel["id"] == hotel_id:
-                hotel["title"] = title
-                return {"status": "OK"}
-            return {"status": "ERROR(title). Hotel not found"}
-    if name:
-        for hotel in hotels:
-            if hotel["id"] == hotel_id:
-                hotel["name"] = name
-                return {"status": "OK"}
-            return {"status": "ERROR(name). Hotel not found"}
-    return {"status": "ERROR. At least one parameter must be provided"}
-
+    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id]
+    if hotel:
+        if title:
+            hotel["title"] = title
+        if name:
+            hotel["name"] = name
+        return {"status": "OK"}
+    return {"status": "ERROR. Hotel not found"}
