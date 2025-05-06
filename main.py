@@ -1,9 +1,7 @@
 from pprint import pprint
 from fastapi import FastAPI, Path, Query, Body
 import uvicorn
-
 from hotels import router as router_hotels
-
 
 app = FastAPI()
 

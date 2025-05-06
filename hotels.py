@@ -45,9 +45,9 @@ def create_hotel(
 
 @router.put("/{hotel_id}")
 def edit_hotel(
-        hotel_id: int = Path(embed=True, description="Идентификатор отеля"),
-        title: str = Body(embed=True),
-        name: str = Body(embed=True)
+        hotel_id: int = Path(description="Идентификатор отеля"),
+        title: str = Body(),
+        name: str = Body()
     ):
     """Меняет все параметры одного отеля"""
     for hotel in hotels:
