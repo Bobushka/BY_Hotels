@@ -1,5 +1,5 @@
 from fastapi import Query, Body, Path, APIRouter
-from pydantic import BaseModel
+from shemas.hotels import Hotel, HotelPATCH
 
 
 router = APIRouter(prefix="/hotels")
@@ -35,11 +35,6 @@ def delete_hotel(hotel_id: int):
     return {"status": "ERROR"}
 
 
-class Hotel(BaseModel):
-    title: str
-    name: str
-
-
 @router.post("")
 def create_hotel(hotel_data: Hotel):
     hotels.append({
@@ -65,16 +60,15 @@ def edit_hotel(hotel_id: int, hotel_data: Hotel):
         description="Частично обновляет данные одного отеля"  # можно использовать HTML
     )
 def update_hotel(
-        hotel_id: int = Path(embed=True, description="Идентификатор отеля"),
-        title: str | None = Body(default=None, embed=True),
-        name: str | None = Body(default=None, embed=True)
+        hotel_id: int,
+        hotel_data: HotelPATCH
     ):
     """Меняет один из параметров или оба параметра одного отеля"""
-    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id]
+    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
     if hotel:
-        if title:
-            hotel["title"] = title
-        if name:
-            hotel["name"] = name
+        if hotel_data.title:
+            hotel["title"] = hotel_data.title
+        if hotel_data.name:
+            hotel["name"] = hotel_data.name
         return {"status": "OK"}
     return {"status": "ERROR. Hotel not found"}
