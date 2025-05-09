@@ -1,5 +1,8 @@
-from fastapi import Query, Body, Path, APIRouter
+# ./hotels.py
+
+from fastapi import Query, Body, APIRouter
 from shemas.hotels import Hotel, HotelPATCH
+from examples import hotelsPOSTexample
 
 
 router = APIRouter(prefix="/hotels")
@@ -36,7 +39,7 @@ def delete_hotel(hotel_id: int):
 
 
 @router.post("")
-def create_hotel(hotel_data: Hotel):
+def create_hotel(hotel_data: Hotel = Body(..., openapi_examples=hotelsPOSTexample)):
     hotels.append({
         "id": hotels[-1]["id"] + 1,
         "title": hotel_data.title,

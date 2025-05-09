@@ -1,3 +1,5 @@
+# ./shemas/hotels.py
+
 from pydantic import BaseModel, Field
 
 
@@ -7,5 +9,5 @@ class Hotel(BaseModel):
 
 
 class HotelPATCH(BaseModel):
-    title: str | None = Field(default=None),
+    title: str | None = Field(default=None)
     name: str | None = Field(default=None)
