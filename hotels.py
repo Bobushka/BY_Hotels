@@ -1,8 +1,8 @@
 from fastapi import Query, Body, Path, APIRouter
+from pydantic import BaseModel
 
 
 router = APIRouter(prefix="/hotels")
-
 
 
 hotels = [
@@ -14,6 +14,7 @@ hotels = [
     {"id": 6, "title": "Казань", "name": "kazan"},
     {"id": 7, "title": "Санкт-Петербург", "name": "spb"},
 ]
+
 
 @router.get("")
 def get_hotels(
@@ -34,32 +35,28 @@ def delete_hotel(hotel_id: int):
     return {"status": "ERROR"}
 
 
+class Hotel(BaseModel):
+    title: str
+    name: str
+
+
 @router.post("")
-def create_hotel(
-        title: str = Body(embed=True, description="Название отеля"),
-        name: str = Body(embed=True, description="Название отеля на английском"),
-    ):
+def create_hotel(hotel_data: Hotel):
     hotels.append({
         "id": hotels[-1]["id"] + 1,
-        "title": title,
-        "name": name
+        "title": hotel_data.title,
+        "name": hotel_data.name
     })
     return {"status": "OK"}
 
 
 @router.put("/{hotel_id}")
-def edit_hotel(
-        hotel_id: int = Path(description="Идентификатор отеля"),
-        title: str = Body(),
-        name: str = Body()
-    ):
+def edit_hotel(hotel_id: int, hotel_data: Hotel):
     """Меняет все параметры одного отеля"""
-    for hotel in hotels:
-        if hotel["id"] == hotel_id:
-            hotel["title"] = title
-            hotel["name"] = name
-            return {"status": "OK"}
-    return {"status": "ERROR. Hotel not found"}
+    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
+    hotel["title"] = hotel_data.title
+    hotel["name"] = hotel_data.name
+    return {"status": "OK"}
 
 
 @router.patch(
