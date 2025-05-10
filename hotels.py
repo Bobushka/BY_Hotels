@@ -39,7 +39,7 @@ def delete_hotel(hotel_id: int):
 
 
 @router.post("")
-def create_hotel(hotel_data: Hotel = Body(..., openapi_examples=hotelsPOSTexample)):
+def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexample)):
     hotels.append({
         "id": hotels[-1]["id"] + 1,
         "title": hotel_data.title,
