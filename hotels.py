@@ -22,11 +22,17 @@ hotels = [
 @router.get("")
 def get_hotels(
     id: int | None = Query(default=None, description="Идентификатор отеля"),
+    title: str | None = Query(default=None, description="Название отеля"),
+
 ):
-    if id:
-        return [hotel for hotel in hotels if hotel["id"] == id]
-    else:
-        return hotels
+    hotels_ = [] 
+    for hotel in hotels:
+        if id and hotel["id"] != id:
+            continue
+        if title and hotel["title"] != title:
+            continue
+        hotels_.append(hotel)
+        return hotels_
 
 
 @router.delete("/{hotel_id}")
