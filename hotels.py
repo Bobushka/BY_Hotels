@@ -1,6 +1,8 @@
 # ./hotels.py
 
-from fastapi import Query, Body, APIRouter
+from fastapi import Depends, Query, Body, APIRouter
+from typing import Annotated
+from dependencies import PaginationDep
 from shemas.hotels import Hotel, HotelPATCH
 from examples import hotelsPOSTexample
 
@@ -21,10 +23,9 @@ hotels = [
 
 @router.get("")
 def get_hotels(
+    pagination: PaginationDep,
     id: int | None = Query(default=None, description="Идентификатор отеля"),
-    title: str | None = Query(default=None, description="Название отеля"),
-    page: int = 0,
-    per_page: int = 3
+    title: str | None = Query(default=None, description="Название отеля")
 ):
     """Возвращает список отелей. Если не передан ни один параметр, то возвращает первую страницу пагинации и на ней первые 10 отелей. Если page и/или per_page переданы, то возвращает соответствующую страницу пагинации с соответствующим количеством отелей на ней."""
     hotels_ = [] 
@@ -39,7 +40,7 @@ def get_hotels(
             return hotels_
     # Реализуем случай передачи страницы пагинации
     else:
-        for hotel in hotels[page * per_page: page * per_page + per_page]:
+        for hotel in hotels[pagination.page * pagination.per_page: pagination.page * pagination.per_page + pagination.per_page]:
             hotels_.append(hotel)
         return hotels_
 
