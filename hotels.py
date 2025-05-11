@@ -23,15 +23,24 @@ hotels = [
 def get_hotels(
     id: int | None = Query(default=None, description="Идентификатор отеля"),
     title: str | None = Query(default=None, description="Название отеля"),
-
+    page: int = 0,
+    per_page: int = 3
 ):
+    """Возвращает список отелей. Если не передан ни один параметр, то возвращает первую страницу пагинации и на ней первые 10 отелей. Если page и/или per_page переданы, то возвращает соответствующую страницу пагинации с соответствующим количеством отелей на ней."""
     hotels_ = [] 
-    for hotel in hotels:
-        if id and hotel["id"] != id:
-            continue
-        if title and hotel["title"] != title:
-            continue
-        hotels_.append(hotel)
+    # Реализуем случай запроса конкретного отеля (id и/или title переданы)
+    if id or title:
+        for hotel in hotels:
+            if id and hotel["id"] != id:
+                continue
+            if title and hotel["title"] != title:
+                continue
+            hotels_.append(hotel)
+            return hotels_
+    # Реализуем случай передачи страницы пагинации
+    else:
+        for hotel in hotels[page * per_page: page * per_page + per_page]:
+            hotels_.append(hotel)
         return hotels_
 
 
