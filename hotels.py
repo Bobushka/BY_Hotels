@@ -27,10 +27,25 @@ def get_hotels(
     id: int | None = Query(default=None, description="Идентификатор отеля"),
     title: str | None = Query(default=None, description="Название отеля")
 ):
-    """Возвращает список отелей. Если не передан ни один параметр, то возвращает первую страницу пагинации и на ней первые 10 отелей. Если page и/или per_page переданы, то возвращает соответствующую страницу пагинации с соответствующим количеством отелей на ней."""
+    """
+    Возвращает список отелей.
+
+    Args:
+        pagination: Параметры пагинации.
+        id: Идентификатор отеля.
+        title: Название отеля.
+
+    Returns:
+        Список отелей.
+    """
+    # Готовим безопасные значения пагинации с учетом возможного None, чтобы умножение всегда было корректным.
+    page = pagination.page if pagination.page is not None else 1
+    per_page = pagination.per_page if pagination.per_page is not None else 3
+    # Инициализируем контейнер для результата, чтобы собирать найденные элементы в одном списке.
     hotels_ = [] 
-    # Реализуем случай запроса конкретного отеля (id и/или title переданы)
+    # Обрабатываем запрос конкретного отеля по id и/или title, чтобы вернуть только совпадения.
     if id or title:
+        # Последовательно фильтруем список отелей по всем переданным критериям.
         for hotel in hotels:
             if id and hotel["id"] != id:
                 continue
@@ -38,24 +53,46 @@ def get_hotels(
                 continue
             hotels_.append(hotel)
             return hotels_
-    # Реализуем случай передачи страницы пагинации
+    # Обрабатываем запрос страницы пагинации, чтобы вернуть нужный срез списка отелей.
     else:
-        for hotel in hotels[pagination.page * pagination.per_page: pagination.page * pagination.per_page + pagination.per_page]:
+        # Берем срез по рассчитанным параметрам пагинации, чтобы сформировать страницу результата.
+        for hotel in hotels[page * per_page: page * per_page + per_page]:
             hotels_.append(hotel)
         return hotels_
 
 
 @router.delete("/{hotel_id}")
 def delete_hotel(hotel_id: int):
+    """
+    Удаляет отель по идентификатору.
+
+    Args:
+        hotel_id: Идентификатор отеля.
+
+    Returns:
+        Статус операции.
+    """
+    # Ищем отель по идентификатору, чтобы удалить первую найденную запись.
     for hotel in hotels:
         if hotel["id"] == hotel_id:
             hotels.remove(hotel)
             return {"status": "OK"}
+    # Если отель не найден, возвращаем статус ошибки без модификации списка.
     return {"status": "ERROR"}
 
 
 @router.post("")
 def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexample)):
+    """
+    Создает новый отель.
+
+    Args:
+        hotel_data: Данные отеля из запроса.
+
+    Returns:
+        Статус операции.
+    """
+    # Добавляем новый объект в конец списка, увеличивая идентификатор на основе последнего элемента.
     hotels.append({
         "id": hotels[-1]["id"] + 1,
         "title": hotel_data.title,
@@ -66,8 +103,19 @@ def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexample)):
 
 @router.put("/{hotel_id}")
 def edit_hotel(hotel_id: int, hotel_data: Hotel):
-    """Меняет все параметры одного отеля"""
+    """
+    Меняет все параметры одного отеля.
+
+    Args:
+        hotel_id: Идентификатор отеля.
+        hotel_data: Новые данные отеля.
+
+    Returns:
+        Статус операции.
+    """
+    # Находим отель по идентификатору, чтобы заменить все его поля.
     hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
+    # Полностью обновляем значения полей, чтобы отразить входные данные.
     hotel["title"] = hotel_data.title
     hotel["name"] = hotel_data.name
     return {"status": "OK"}
@@ -82,12 +130,24 @@ def update_hotel(
         hotel_id: int,
         hotel_data: HotelPATCH
     ):
-    """Меняет один из параметров или оба параметра одного отеля"""
+    """
+    Меняет один из параметров или оба параметра одного отеля.
+
+    Args:
+        hotel_id: Идентификатор отеля.
+        hotel_data: Частичные данные отеля.
+
+    Returns:
+        Статус операции.
+    """
+    # Ищем отель по идентификатору, чтобы применить частичное обновление.
     hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
     if hotel:
+        # Обновляем только переданные поля, чтобы сохранить остальные значения.
         if hotel_data.title:
             hotel["title"] = hotel_data.title
         if hotel_data.name:
             hotel["name"] = hotel_data.name
         return {"status": "OK"}
+    # Если отель не найден, возвращаем ошибку без изменений.
     return {"status": "ERROR. Hotel not found"}
