@@ -1,6 +1,6 @@
 # ./hotels.py
 
-from fastapi import Depends, Query, Body, APIRouter
+from fastapi import Query, Body, APIRouter
 from typing import Annotated
 from dependencies import PaginationDep
 from shemas.hotels import Hotel, HotelPATCH
