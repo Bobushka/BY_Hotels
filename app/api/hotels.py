@@ -2,9 +2,9 @@
 
 from fastapi import Query, Body, APIRouter
 from typing import Annotated
-from dependencies import PaginationDep
-from shemas.hotels import Hotel, HotelPATCH
-from examples import hotelsPOSTexample
+from app.api.dependencies import PaginationDep
+from app.shemas.hotels import Hotel, HotelPATCH
+from app.api.examples import hotelsPOSTexample
 
 
 router = APIRouter(prefix="/hotels")

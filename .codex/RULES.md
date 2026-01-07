@@ -9,7 +9,7 @@
 6. Never use placeholders (like `<user>` or `<path>`).  
 7. Use only verified and previously confirmed code.  
 8. If unsure — say **“don’t know”**, not assumptions.  
-9. Proceed **step by step**, waiting for explicit “OK / next”.  
+9. Proceed **step by step**, waiting for explicit “OK / next” only before code edits.  
 10. Do not propose tests, refactors, or extra features unless requested.  
 11. If code requires assumptions, explicitly confirm each assumption with the user before coding.  
 12. Every function must include a PEP 8–style docstring, e.g.:
