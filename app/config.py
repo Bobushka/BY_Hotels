@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     def DB_URL(self):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
+    @property  # это синхронный драйвер БД, он необходим для работы алембика
+    def DB_URL_SYNC(self):
+        return f"postgresql+psycopg2://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
     model_config = SettingsConfigDict(
         # pathlib позволяет формировать путь с помощью оператора "/", аналогично os.path.join()
         # Такой способ задания пути к .env файлу делает загрузку конфигураций стабильной и понятной. Путь до корня проекта вычисляется относительно расположения самого модуля config.py в проекте, а не от текущей рабочей директории процесса.
