@@ -8,14 +8,14 @@ hotelsPOSTexample = {
         summary="Сочи",
         value={
             "title": "Отель Сочи 5 звезд у моря",
-            "name": "sochi_u_morya",
+            "location": "ул. Моря, 1",
         },
     ),
     "2": Example(
         summary="Дубай",
         value={
             "title": "Отель Дубай У фонтана",
-            "name": "dubai_fountain",
+            "location": "ул. Шейха, 2",
         },
     ),
 }

@@ -2,23 +2,16 @@
 
 from fastapi import Query, Body, APIRouter
 from typing import Annotated
+from sqlalchemy import insert
+
 from app.api.dependencies import PaginationDep
 from app.shemas.hotels import Hotel, HotelPATCH
 from app.api.examples import hotelsPOSTexample
+from database import async_session_maker
+from app.models.hotels import HotelsORM
 
 
 router = APIRouter(prefix="/hotels")
-
-
-hotels = [
-    {"id": 1, "title": "Sochi", "name": "sochi"},
-    {"id": 2, "title": "Дубай", "name": "dubai"},
-    {"id": 3, "title": "Мальдивы", "name": "maldivi"},
-    {"id": 4, "title": "Геленджик", "name": "gelendzhik"},
-    {"id": 5, "title": "Москва", "name": "moscow"},
-    {"id": 6, "title": "Казань", "name": "kazan"},
-    {"id": 7, "title": "Санкт-Петербург", "name": "spb"},
-]
 
 
 @router.get("")
@@ -82,7 +75,7 @@ def delete_hotel(hotel_id: int):
 
 
 @router.post("")
-def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexample)):
+async def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexample)):
     """
     Создает новый отель.
 
@@ -92,12 +85,11 @@ def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexample)):
     Returns:
         Статус операции.
     """
-    # Добавляем новый объект в конец списка, увеличивая идентификатор на основе последнего элемента.
-    hotels.append({
-        "id": hotels[-1]["id"] + 1,
-        "title": hotel_data.title,
-        "name": hotel_data.name
-    })
+    async with async_session_maker() as session:
+        add_hotel_query = insert(HotelsORM).values(**hotel_data.model_dump())
+        await session.execute(add_hotel_query)
+        await session.commit()
+
     return {"status": "OK"}
 
 
