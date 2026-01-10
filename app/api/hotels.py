@@ -17,7 +17,7 @@ router = APIRouter(prefix="/hotels")
 @router.get("")
 async def get_hotels(
     pagination: PaginationDep,
-    title: str | None = Query(default=None, description="Название отеля"),
+    sub_title: str | None = Query(default=None, description="Название отеля"),
     sub_location: str | None = Query(default=None, description="Подстрока адреса отеля")
 ):
     """
@@ -35,8 +35,8 @@ async def get_hotels(
         query = select(HotelsORM)
         if sub_location:
             query = query.filter(func.lower(HotelsORM.location).contains(sub_location.strip().lower()))
-        if title:
-            query = query.filter(func.lower(HotelsORM.title).contains(title.strip().lower()))
+        if sub_title:
+            query = query.filter(func.lower(HotelsORM.title).contains(sub_title.strip().lower()))
         query = (
             query
             .limit(pagination.per_page)
