@@ -33,14 +33,10 @@ async def get_hotels(
     """
     async with async_session_maker() as session:
         query = select(HotelsORM)
-        if title:
-            query = query.filter_by(title=title)
         if sub_location:
-            query = (
-                query
-                .where(func.lower(HotelsORM.location)  # приводим к нижнему регистру содержание колонки
-                .like(f"%{sub_location.lower()}%"))  # приводим к нижнему регистру запрос пользователя
-            )
+            query = query.filter(func.lower(HotelsORM.location).contains(sub_location.strip().lower()))
+        if title:
+            query = query.filter(func.lower(HotelsORM.title).contains(title.strip().lower()))
         query = (
             query
             .limit(pagination.per_page)
