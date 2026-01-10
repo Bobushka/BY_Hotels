@@ -2,12 +2,12 @@
 
 from fastapi import Query, Body, APIRouter
 from typing import Annotated
-from sqlalchemy import insert
+from sqlalchemy import insert, select, func
 
 from app.api.dependencies import PaginationDep
 from app.shemas.hotels import Hotel, HotelPATCH
 from app.api.examples import hotelsPOSTexample
-from database import async_session_maker
+from database import engine, async_session_maker
 from app.models.hotels import HotelsORM
 
 
@@ -15,10 +15,10 @@ router = APIRouter(prefix="/hotels")
 
 
 @router.get("")
-def get_hotels(
+async def get_hotels(
     pagination: PaginationDep,
-    id: int | None = Query(default=None, description="Идентификатор отеля"),
-    title: str | None = Query(default=None, description="Название отеля")
+    title: str | None = Query(default=None, description="Название отеля"),
+    sub_location: str | None = Query(default=None, description="Подстрока адреса отеля")
 ):
     """
     Возвращает список отелей.
@@ -31,27 +31,25 @@ def get_hotels(
     Returns:
         Список отелей.
     """
-    # Готовим безопасные значения пагинации с учетом возможного None, чтобы умножение всегда было корректным.
-    page = pagination.page if pagination.page is not None else 1
-    per_page = pagination.per_page if pagination.per_page is not None else 3
-    # Инициализируем контейнер для результата, чтобы собирать найденные элементы в одном списке.
-    hotels_ = [] 
-    # Обрабатываем запрос конкретного отеля по id и/или title, чтобы вернуть только совпадения.
-    if id or title:
-        # Последовательно фильтруем список отелей по всем переданным критериям.
-        for hotel in hotels:
-            if id and hotel["id"] != id:
-                continue
-            if title and hotel["title"] != title:
-                continue
-            hotels_.append(hotel)
-            return hotels_
-    # Обрабатываем запрос страницы пагинации, чтобы вернуть нужный срез списка отелей.
-    else:
-        # Берем срез по рассчитанным параметрам пагинации, чтобы сформировать страницу результата.
-        for hotel in hotels[page * per_page: page * per_page + per_page]:
-            hotels_.append(hotel)
-        return hotels_
+    async with async_session_maker() as session:
+        query = select(HotelsORM)
+        if title:
+            query = query.filter_by(title=title)
+        if sub_location:
+            query = (
+                query
+                .where(func.lower(HotelsORM.location)  # приводим к нижнему регистру содержание колонки
+                .like(f"%{sub_location.lower()}%"))  # приводим к нижнему регистру запрос пользователя
+            )
+        query = (
+            query
+            .limit(pagination.per_page)
+            .offset(pagination.per_page * (pagination.page - 1))
+        )
+        result = await session.execute(query)
+
+        hotels = result.scalars().all()
+        return hotels
 
 
 @router.delete("/{hotel_id}")
@@ -87,6 +85,7 @@ async def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexamp
     """
     async with async_session_maker() as session:
         add_hotel_query = insert(HotelsORM).values(**hotel_data.model_dump())
+        print(add_hotel_query.compile(bind=engine, compile_kwargs={"literal_binds": True}))  # эта строка позволяет увидеть в терминале реальный SQL-запрос который алхимия отправляет в БД. Это полезно для дебага.
         await session.execute(add_hotel_query)
         await session.commit()
 

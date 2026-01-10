@@ -6,7 +6,7 @@ from typing import Annotated
 class PaginationParams(BaseModel):
     """Параметры пагинации."""
     page: Annotated[int, Field(default=1, ge=1, description="Номер страницы")]
-    per_page: Annotated[int, Field(default=3, ge=1, le=10, description="Количество элементов на странице")]
+    per_page: Annotated[int, Field(default=5, ge=1, le=10, description="Количество элементов на странице")]
 
 
 def pagination_params(
