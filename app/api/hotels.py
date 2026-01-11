@@ -1,14 +1,13 @@
-# ./hotels.py
+# app/api/hotels.py
 
 from fastapi import Query, Body, APIRouter
 from typing import Annotated
-from sqlalchemy import insert, select, func
 
 from app.api.dependencies import PaginationDep
 from app.shemas.hotels import Hotel, HotelPATCH
 from app.api.examples import hotelsPOSTexample
 from database import engine, async_session_maker
-from app.models.hotels import HotelsORM
+from app.repositories.hotels import HotelsRepository
 
 
 router = APIRouter(prefix="/hotels")
@@ -17,55 +16,42 @@ router = APIRouter(prefix="/hotels")
 @router.get("")
 async def get_hotels(
     pagination: PaginationDep,
-    sub_title: str | None = Query(default=None, description="Название отеля"),
-    sub_location: str | None = Query(default=None, description="Подстрока адреса отеля")
+    sub_title: str | None = Query(default=None, description="Подстрока названия отеля в любом регистре"),
+    sub_location: str | None = Query(default=None, description="Подстрока адреса отеля в любом регистре")
 ):
     """
     Возвращает список отелей.
 
     Args:
         pagination: Параметры пагинации.
-        id: Идентификатор отеля.
-        title: Название отеля.
+        sub_title: Подстрока названия отеля в любом регистре.
+        sub_location: Подстрока адреса отеля в любом регистре.
 
     Returns:
         Список отелей.
     """
     async with async_session_maker() as session:
-        query = select(HotelsORM)
-        if sub_location:
-            query = query.filter(func.lower(HotelsORM.location).contains(sub_location.strip().lower()))
-        if sub_title:
-            query = query.filter(func.lower(HotelsORM.title).contains(sub_title.strip().lower()))
-        query = (
-            query
-            .limit(pagination.per_page)
-            .offset(pagination.per_page * (pagination.page - 1))
+        return await HotelsRepository(session).get_all(
+            location=sub_location,
+            title=sub_title,
+            limit=pagination.per_page,
+            offset=pagination.per_page * (pagination.page - 1)
         )
-        result = await session.execute(query)
-
-        hotels = result.scalars().all()
-        return hotels
 
 
-@router.delete("/{hotel_id}")
-def delete_hotel(hotel_id: int):
+@router.get("/{hotel_id}")
+async def get_hotel(hotel_id: int):
     """
-    Удаляет отель по идентификатору.
+    Возвращает один отель по его id.
 
     Args:
-        hotel_id: Идентификатор отеля.
+        hotel_id: идентификатор отеля в БД.
 
     Returns:
-        Статус операции.
+        JSON с параметрами одного отеля.
     """
-    # Ищем отель по идентификатору, чтобы удалить первую найденную запись.
-    for hotel in hotels:
-        if hotel["id"] == hotel_id:
-            hotels.remove(hotel)
-            return {"status": "OK"}
-    # Если отель не найден, возвращаем статус ошибки без модификации списка.
-    return {"status": "ERROR"}
+    async with async_session_maker() as session:
+        return await HotelsRepository(session).get_one_or_none(id=hotel_id)
 
 
 @router.post("")
@@ -80,16 +66,14 @@ async def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexamp
         Статус операции.
     """
     async with async_session_maker() as session:
-        add_hotel_query = insert(HotelsORM).values(**hotel_data.model_dump())
-        print(add_hotel_query.compile(bind=engine, compile_kwargs={"literal_binds": True}))  # эта строка позволяет увидеть в терминале реальный SQL-запрос который алхимия отправляет в БД. Это полезно для дебага.
-        await session.execute(add_hotel_query)
+        hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
 
-    return {"status": "OK"}
+    return {"status": "OK", "data": hotel}
 
 
 @router.put("/{hotel_id}")
-def edit_hotel(hotel_id: int, hotel_data: Hotel):
+async def edit_hotel(hotel_id: int, hotel_data: Hotel):
     """
     Меняет все параметры одного отеля.
 
@@ -100,11 +84,9 @@ def edit_hotel(hotel_id: int, hotel_data: Hotel):
     Returns:
         Статус операции.
     """
-    # Находим отель по идентификатору, чтобы заменить все его поля.
-    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
-    # Полностью обновляем значения полей, чтобы отразить входные данные.
-    hotel["title"] = hotel_data.title
-    hotel["name"] = hotel_data.name
+    async with async_session_maker() as session:
+        hotel = await HotelsRepository(session).edit(hotel_data, id=hotel_id)
+        await session.commit()
     return {"status": "OK"}
 
 
@@ -113,10 +95,7 @@ def edit_hotel(hotel_id: int, hotel_data: Hotel):
         summary="Меняет один из параметров или оба параметра одного отеля",
         description="Частично обновляет данные одного отеля"  # можно использовать HTML
     )
-def update_hotel(
-        hotel_id: int,
-        hotel_data: HotelPATCH
-    ):
+async def partially_edit_hotel(hotel_id: int, hotel_data: HotelPATCH):
     """
     Меняет один из параметров или оба параметра одного отеля.
 
@@ -127,14 +106,24 @@ def update_hotel(
     Returns:
         Статус операции.
     """
-    # Ищем отель по идентификатору, чтобы применить частичное обновление.
-    hotel = [hotel for hotel in hotels if hotel["id"] == hotel_id][0]
-    if hotel:
-        # Обновляем только переданные поля, чтобы сохранить остальные значения.
-        if hotel_data.title:
-            hotel["title"] = hotel_data.title
-        if hotel_data.name:
-            hotel["name"] = hotel_data.name
-        return {"status": "OK"}
-    # Если отель не найден, возвращаем ошибку без изменений.
-    return {"status": "ERROR. Hotel not found"}
+    async with async_session_maker() as session:
+        await HotelsRepository(session).edit(hotel_data, exclude_unset=True, id=hotel_id)
+        await session.commit()
+    return {"status": "OK"}
+
+
+@router.delete("/{hotel_id}")
+async def delete_hotel(hotel_id: int):
+    """
+    Удаляет отель по идентификатору.
+
+    Args:
+        hotel_id: Идентификатор отеля.
+
+    Returns:
+        Статус операции.
+    """
+    async with async_session_maker() as session:
+        hotel = await HotelsRepository(session).delete(id=hotel_id)
+        await session.commit()
+    return {"status": "OK"}
