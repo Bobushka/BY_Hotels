@@ -1,10 +1,13 @@
+from typing import List
 from sqlalchemy import select, func
+from app.shemas.hotels import Hotel
 from repositories.base import BaseRepository
 from app.models.hotels import HotelsORM
 
 
 class HotelsRepository(BaseRepository):
     model = HotelsORM
+    schema = Hotel
 
     # специфический для отелей метод прописываем здесь, а не в base.py:
     async def get_all(
@@ -13,7 +16,8 @@ class HotelsRepository(BaseRepository):
             title,
             limit,
             offset,
-    ):
+    ) -> List[Hotel]:
+        
         query = select(HotelsORM)
         if location:
             query = query.filter(func.lower(HotelsORM.location).contains(location.strip().lower()))
@@ -28,4 +32,4 @@ class HotelsRepository(BaseRepository):
         print(query.compile(compile_kwargs={"literal_binds": True}))  # 4DEBUG
         result = await self.session.execute(query)
 
-        return result.scalars().all()
+        return [Hotel.model_validate(hotel) for hotel in result.scalars().all()]

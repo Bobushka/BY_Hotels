@@ -3,12 +3,13 @@ from sqlalchemy import select, insert, update, delete
 from typing import ClassVar, Type
 
 from app.database import BaseModel as DB_BaseModel
-from app.models.hotels import HotelsORM
+from pydantic import BaseModel as SH_BaseModel
 
 
 class BaseRepository:
     # покажем линтеру что model это переменная, относящаяся к классу BaseModel. Иначе ругается.
     model: ClassVar[Type[DB_BaseModel]]
+    schema: ClassVar[Type[SH_BaseModel]]
 
     def __init__(self, session):
         self.session = session
@@ -16,17 +17,23 @@ class BaseRepository:
     async def get_all(self, *args, **kwargs):
         query = select(self.model)
         result = await self.session.execute(query)
-        return result.scalars().all()
+        # реализуем паттерн Data Mapper в простейшем исполнении: 
+        # вернем не ORM-модель, а Pydantic-схему
+        return [self.schema.model_validate(model) for model in result.scalars().all()]
     
     async def get_one_or_none(self, **filter_by):
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
-        return result.scalars().one_or_none()
+        model = result.scalars().one_or_none()
+        if model is None:
+            return None
+        return self.schema.model_validate(model)
     
     async def add(self, data: SH_BaseModel):
         add_data_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         result = await self.session.execute(add_data_stmt)
-        return result.scalars().one()
+        model = result.scalars().one()
+        return self.schema.model_validate(model)
     
     async def edit(self, data: SH_BaseModel, exclude_unset: bool = False, **filter_by) -> None:
         update_stmt = (

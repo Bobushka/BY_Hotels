@@ -4,7 +4,7 @@ from fastapi import Query, Body, APIRouter
 from typing import Annotated
 
 from app.api.dependencies import PaginationDep
-from app.shemas.hotels import Hotel, HotelPATCH
+from app.shemas.hotels import HotelAdd, HotelPATCH
 from app.api.examples import hotelsPOSTexample
 from database import engine, async_session_maker
 from app.repositories.hotels import HotelsRepository
@@ -55,7 +55,7 @@ async def get_hotel(hotel_id: int):
 
 
 @router.post("")
-async def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexample)):
+async def create_hotel(hotel_data: HotelAdd = Body(openapi_examples=hotelsPOSTexample)):
     """
     Создает новый отель.
 
@@ -73,7 +73,7 @@ async def create_hotel(hotel_data: Hotel = Body(openapi_examples=hotelsPOSTexamp
 
 
 @router.put("/{hotel_id}")
-async def edit_hotel(hotel_id: int, hotel_data: Hotel):
+async def edit_hotel(hotel_id: int, hotel_data: HotelAdd):
     """
     Меняет все параметры одного отеля.
 
