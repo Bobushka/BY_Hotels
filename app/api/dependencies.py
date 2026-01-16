@@ -1,6 +1,13 @@
-from fastapi import Depends, Query
+# app/api/dependencies.py
+
+from fastapi import Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from typing import Annotated
+
+from app.services.auth import AuthService
+
+
+# ================= Получаем параметры пагинации ==============================
 
 
 class PaginationParams(BaseModel):
@@ -29,3 +36,44 @@ def pagination_params(
 
 # Pagination Dependency Parameter
 PaginationDep = Annotated[PaginationParams, Depends(pagination_params)]  
+
+
+# ================= Получаем User ID из JWT-токена ============================
+
+
+def get_token(request: Request) -> str:
+    """
+    Достает access-токен из cookies запроса.
+
+    Args:
+        request: входящий HTTP-запрос с cookies.
+
+    Returns:
+        Строка access-токена.
+
+    Raises:
+        HTTPException: если токен отсутствует.
+    """
+    # Берем access-токен из cookies; если его нет — запрещаем доступ.
+    token = request.cookies.get("access_token", None)
+    if not token:
+        raise HTTPException(status_code=401, detail="Нет токена доступа")
+    return token
+
+
+def get_current_user_id(token: str = Depends(get_token)) -> int:
+    """
+    Возвращает идентификатор пользователя из access-токена.
+
+    Args:
+        token: access-токен из cookies (через зависимость get_token).
+
+    Returns:
+        Идентификатор пользователя (user_id) из payload токена.
+    """
+    # Декодируем токен и извлекаем user_id из payload.
+    data = AuthService().decode_token(token)
+    return data["user_id"]
+
+
+UserIdDep = Annotated[int, Depends(get_current_user_id)]  

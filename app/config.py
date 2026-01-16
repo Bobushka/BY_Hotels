@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     @property  # это синхронный драйвер БД, он необходим для работы алембика
     def DB_URL_SYNC(self):
         return f"postgresql+psycopg2://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+    
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
 
     model_config = SettingsConfigDict(
         # pathlib позволяет формировать путь с помощью оператора "/", аналогично os.path.join()
