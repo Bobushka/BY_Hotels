@@ -1,10 +1,9 @@
 # app/api/hotels.py
 
 from fastapi import Query, Body, APIRouter
-from typing import Annotated
 
 from app.api.dependencies import PaginationDep
-from app.shemas.hotels import HotelAdd, HotelPATCH
+from app.schemas.hotels import HotelAdd, HotelPatch
 from app.api.examples import hotelsPOSTexample
 from database import engine, async_session_maker
 from app.repositories.hotels import HotelsRepository
@@ -95,7 +94,7 @@ async def edit_hotel(hotel_id: int, hotel_data: HotelAdd):
         summary="Меняет один из параметров или оба параметра одного отеля",
         description="Частично обновляет данные одного отеля"  # можно использовать HTML
     )
-async def partially_edit_hotel(hotel_id: int, hotel_data: HotelPATCH):
+async def partially_edit_hotel(hotel_id: int, hotel_data: HotelPatch):
     """
     Меняет один из параметров или оба параметра одного отеля.
 

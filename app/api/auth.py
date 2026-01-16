@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError, NoResultFound
 from app.api.dependencies import UserIdDep
 from repositories.users import UsersRepository
 from app.database import async_session_maker
-from app.shemas.users import UserRequestAdd, UserAdd
+from app.schemas.users import UserRequestAdd, UserAdd
 from app.services.auth import AuthService
 
 router = APIRouter(prefix="/auth")
@@ -93,8 +93,6 @@ async def get_me(user_id: UserIdDep):
 
 
 @router.post("/logout")
-async def logout_user(
-        response: Response,
-):
+async def logout_user(response: Response):
     response.delete_cookie("access_token")
     return {"Logout OK"}

@@ -3,7 +3,7 @@ from pydantic import EmailStr
 from sqlalchemy import select
 from repositories.base import BaseRepository
 from app.models.users import UsersORM
-from app.shemas.users import User, UserWithHashedPassword
+from app.schemas.users import User, UserWithHashedPassword
 
 
 class UsersRepository(BaseRepository):

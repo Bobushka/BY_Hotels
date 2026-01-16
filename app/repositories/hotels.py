@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy import select, func
-from app.shemas.hotels import Hotel
+from app.schemas.hotels import Hotel
 from repositories.base import BaseRepository
 from app.models.hotels import HotelsORM
 

@@ -7,6 +7,7 @@ from typing import Annotated
 from app.services.auth import AuthService
 
 
+
 # ================= Получаем параметры пагинации ==============================
 
 
@@ -36,6 +37,7 @@ def pagination_params(
 
 # Pagination Dependency Parameter
 PaginationDep = Annotated[PaginationParams, Depends(pagination_params)]  
+
 
 
 # ================= Получаем User ID из JWT-токена ============================
