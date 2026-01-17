@@ -2,11 +2,11 @@ from typing import List
 from sqlalchemy import select, func
 from app.schemas.hotels import Hotel
 from repositories.base import BaseRepository
-from app.models.hotels import HotelsORM
+from app.models.hotels import HotelsOrm
 
 
 class HotelsRepository(BaseRepository):
-    model = HotelsORM
+    model = HotelsOrm
     schema = Hotel
 
     # специфический для отелей метод прописываем здесь, а не в base.py:
@@ -18,11 +18,11 @@ class HotelsRepository(BaseRepository):
             offset,
     ) -> List[Hotel]:
         
-        query = select(HotelsORM)
+        query = select(HotelsOrm)
         if location:
-            query = query.filter(func.lower(HotelsORM.location).contains(location.strip().lower()))
+            query = query.filter(func.lower(HotelsOrm.location).contains(location.strip().lower()))
         if title:
-            query = query.filter(func.lower(HotelsORM.title).contains(title.strip().lower()))
+            query = query.filter(func.lower(HotelsOrm.title).contains(title.strip().lower()))
         query = (
             query
             .limit(limit)

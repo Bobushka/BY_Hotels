@@ -3,13 +3,13 @@ from sqlalchemy import select, insert, update, delete
 from typing import ClassVar, Type
 
 from app.database import BaseModel as DB_BaseModel
-from pydantic import BaseModel as SH_BaseModel
+from pydantic import BaseModel
 
 
 class BaseRepository:
     # покажем линтеру что model это переменная, относящаяся к классу BaseModel. Иначе ругается.
     model: ClassVar[Type[DB_BaseModel]]
-    schema: ClassVar[Type[SH_BaseModel]]
+    schema: ClassVar[Type[BaseModel]]
 
     def __init__(self, session):
         self.session = session

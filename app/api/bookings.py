@@ -1,0 +1,52 @@
+from fastapi import APIRouter, HTTPException
+from sqlalchemy.exc import NoResultFound
+
+from app.api.dependencies import DBDep, UserIdDep
+from app.schemas.bookings import BookingAddRequest, BookingAdd
+
+router = APIRouter(prefix="/bookings")
+
+
+@router.get("")
+async def get_bookings(db: DBDep):
+    return await db.bookings.get_all()
+
+
+@router.get("/me")
+async def get_my_bookings(user_id: UserIdDep, db: DBDep):
+    return await db.bookings.get_filtered(user_id=user_id)
+
+
+@router.post("")
+async def add_booking(
+        user_id: UserIdDep,
+        db: DBDep,
+        booking_data: BookingAddRequest,
+):
+    """
+    Создает бронирование для пользователя.
+
+    Args:
+        user_id: идентификатор пользователя из зависимости авторизации.
+        db: Менеджер БД для доступа к репозиториям.
+        booking_data: данные бронирования из запроса.
+
+    Returns:
+        Статус операции и созданное бронирование.
+    """
+    # Получаем номер по id; если не найден — возвращаем ошибку.
+    try:
+        room = await db.rooms.get_room(id=booking_data.room_id)
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail="Номер не найден")
+    # Берем цену номера для расчета стоимости бронирования.
+    room_price: int = room.price
+    _booking_data = BookingAdd(
+        user_id=user_id,
+        price=room_price,
+        **booking_data.model_dump(),
+    )
+    # Создаем бронирование и фиксируем изменения.
+    booking = await db.bookings.add(_booking_data)
+    await db.commit()
+    return {"status": "OK", "data": booking}

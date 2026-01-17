@@ -4,7 +4,7 @@ from sqlalchemy import String
 
 
 # Создаем модель таблицы "Отели", которая отображает будущую реальную таблицу в БД
-class HotelsORM(BaseModel):
+class HotelsOrm(BaseModel):
     __tablename__ = "hotels"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # уникальный первичный ключ
